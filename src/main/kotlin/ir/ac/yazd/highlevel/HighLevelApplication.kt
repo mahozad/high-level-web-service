@@ -38,7 +38,7 @@ class HighLevelApplication {
     @GetMapping("/data")
     @ResponseBody
     fun getData(@CookieValue userId: Int?): String {
-        return if (userId == null || !data.containsKey(userId)) "No data yet" else data.getValue(userId).toString()
+        return if (!data.containsKey(userId)) "No data yet" else data[userId].toString()
     }
 
     @GetMapping("/store")
@@ -47,17 +47,15 @@ class HighLevelApplication {
                   @RequestParam key: String, @RequestParam value: String,
                   response: HttpServletResponse): String {
 
-        return if (userId == null || !data.containsKey(userId)) {
+        if (!data.containsKey(userId)) {
             clientNumber++
-            data[clientNumber] = mutableSetOf(Pair(key, value))
+            data[clientNumber] = mutableSetOf()
 
             val cookie = Cookie("userId", clientNumber.toString())
             response.addCookie(cookie)
-
-            data.getValue(clientNumber).toString()
-        } else {
-            data.getValue(userId).add(Pair(key, value))
-            data.getValue(userId).toString()
         }
+
+        data[userId ?: clientNumber]!!.add(Pair(key, value))
+        return data[userId ?: clientNumber].toString()
     }
 }
