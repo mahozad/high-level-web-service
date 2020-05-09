@@ -12,8 +12,8 @@ import java.time.Instant
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 
-fun main(args: Array<String>) {
-    runApplication<HighLevelService>(*args)
+fun main() {
+    runApplication<HighLevelService>()
 }
 
 @SpringBootApplication
