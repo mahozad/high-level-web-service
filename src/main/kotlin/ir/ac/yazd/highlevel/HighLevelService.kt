@@ -13,12 +13,12 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 
 fun main(args: Array<String>) {
-    runApplication<HighLevelApplication>(*args)
+    runApplication<HighLevelService>(*args)
 }
 
 @SpringBootApplication
 @Controller
-class HighLevelApplication {
+class HighLevelService {
 
     private val startTime = Instant.now()
     private var clientNumber = 0
