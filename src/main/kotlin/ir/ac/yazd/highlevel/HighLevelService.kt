@@ -44,7 +44,7 @@ class HighLevelService {
     @GetMapping("/store")
     @ResponseBody
     fun storeData(@CookieValue userId: Int?,
-                  @RequestParam key: String, @RequestParam value: String,
+                  @RequestParam params: Map<String, String>,
                   response: HttpServletResponse): String {
 
         if (!data.containsKey(userId)) {
@@ -55,7 +55,10 @@ class HighLevelService {
             response.addCookie(cookie)
         }
 
-        data[userId ?: clientNumber]!!.add(Pair(key, value))
+        for (param in params) {
+            data[userId ?: clientNumber]!!.add(Pair(param.key, param.value))
+        }
+
         return data[userId ?: clientNumber].toString()
     }
 }
