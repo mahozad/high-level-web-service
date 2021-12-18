@@ -9,8 +9,13 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
+
+typealias Id = Int
+typealias Params = Map<String, String>
+typealias UserData = MutableSet<Map.Entry<String, String>>
 
 fun main() {
     runApplication<HighLevelService>()
@@ -21,44 +26,35 @@ fun main() {
 class HighLevelService {
 
     private val startTime = Instant.now()
-    private var clientNumber = 0
-    private val data = mutableMapOf<Int, MutableSet<Pair<String, String>>>()
+    private var clientNumber = AtomicInteger(0)
+    private val data = mutableMapOf<Id, UserData>()
 
     @GetMapping("/")
-    fun home(): String {
-        return "index"
-    }
+    fun home() = "index"
 
     @GetMapping("/uptime")
     @ResponseBody
-    fun uptime(): String {
-        return "${Duration.between(startTime, Instant.now()).seconds}s"
-    }
+    fun uptime() = "${Duration.between(startTime, Instant.now()).seconds}s"
 
     @GetMapping("/data")
     @ResponseBody
-    fun getData(@CookieValue userId: Int?): String {
-        return if (!data.containsKey(userId)) "No data yet" else data[userId].toString()
-    }
+    fun data(@CookieValue userId: Id?) = data[userId]?.toString() ?: "No data yet"
 
     @GetMapping("/store")
     @ResponseBody
-    fun storeData(@CookieValue userId: Int?,
-                  @RequestParam params: Map<String, String>,
+    fun storeData(@CookieValue userId: Id?,
+                  @RequestParam params: Params,
                   response: HttpServletResponse): String {
+        val id = userId ?: clientNumber.incrementAndGet()
+        val isNewUser = userId !in data
+        if (isNewUser) addNewUser(id, response)
+        for (param in params) data[id]?.add(param)
+        return data[id].toString()
+    }
 
-        if (!data.containsKey(userId)) {
-            clientNumber++
-            data[clientNumber] = mutableSetOf()
-
-            val cookie = Cookie("userId", clientNumber.toString())
-            response.addCookie(cookie)
-        }
-
-        for (param in params) {
-            data[userId ?: clientNumber]!!.add(Pair(param.key, param.value))
-        }
-
-        return data[userId ?: clientNumber].toString()
+    private fun addNewUser(id: Id, response: HttpServletResponse) {
+        data[id] = mutableSetOf()
+        val cookie = Cookie("userId", id.toString())
+        response.addCookie(cookie)
     }
 }
